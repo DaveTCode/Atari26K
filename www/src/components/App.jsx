@@ -2,7 +2,7 @@ import React from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
 
-const App = () => {
+function App() {
   return (
     <Container>
       <Grid container spacing={2}>

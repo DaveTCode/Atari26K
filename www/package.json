@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.config.js --mode production",
+    "lint": "eslint src",
     "start": "webpack serve --mode development"
   },
   "author": "David Tyler <davet.code@gmail.com>",
@@ -13,8 +14,8 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.5",
-    "@mui/material": "^5.14.0",
     "@mui/lab": "5.0.0-alpha.136",
+    "@mui/material": "^5.14.0",
     "mos-6502-cpu": "file:../pkg",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -25,6 +26,12 @@
     "@babel/preset-react": "^7.22.5",
     "babel-loader": "^9.1.3",
     "css-loader": "^6.8.1",
+    "eslint": "^8.45.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "html-webpack-plugin": "^5.5.3",
     "webpack": "5.88.1",
     "webpack-cli": "5.1.4",
