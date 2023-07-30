@@ -22,9 +22,10 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
-    'max-len': ['off'],
-    'no-bitwise': ['off'],
+    'max-len': 'off',
+    'no-bitwise': 'off',
     'no-console': 'off',
     'no-param-reassign': ['error', { props: false }],
+    'prefer-destructuring': 'off',
   },
 };
