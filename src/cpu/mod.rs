@@ -390,6 +390,8 @@ impl Cpu {
             CpuState::FetchOpcode => {
                 let opcode = &OPCODE_TABLE[self.read_and_inc_program_counter(device) as usize];
 
+                info!("Opcode: {:?} at cycle {}", opcode, self.cycles);
+
                 match opcode.address_mode {
                     AddressingMode::Accumulator => State::Cpu(CpuState::ThrowawayRead {
                         opcode,
@@ -1010,6 +1012,8 @@ impl Cpu {
 #[wasm_bindgen]
 pub fn new_cpu(initial_cycles: u32, device: &Device) -> Cpu {
     panic::set_hook(Box::new(console_error_panic_hook::hook));
+
+    wasm_logger::init(wasm_logger::Config::default());
 
     // The processor starts at the RESET interrupt handler address
     let pc = device.read_byte(Interrupt::RESET(0).offset()) as u16

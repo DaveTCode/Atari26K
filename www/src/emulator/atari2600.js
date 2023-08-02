@@ -1,11 +1,17 @@
 import * as wasm from 'mos-6502-cpu';
 import TIA from './tia';
+import RIOT from './riot';
 
 class Atari2600 {
   constructor(rom) {
-    this.ram = new Uint8Array(128);
     this.rom = rom;
+    this.restart();
+  }
+
+  restart = () => {
+    this.paused = false;
     this.tia = new TIA();
+    this.riot = new RIOT();
     this.runTimeoutId = 0;
     this.lastFrameTimes = [];
     this.lastFrameTimePtr = 0;
@@ -15,14 +21,23 @@ class Atari2600 {
 
     // Must come last as immediately makes calls back to this class to read instructions
     this.cpu = wasm.new_cpu(8, this);
-  }
+  };
+
+  pause = () => {
+    this.paused = true;
+  };
+
+  play = () => {
+    this.paused = false;
+    this.runTimeoutId = setTimeout(this.runFrame, 0);
+  };
 
   runFrame = () => {
     const currentTimeMs = Date.now();
 
     for (let clock = 0; clock < this.cyclesPerFrame; clock += 1) {
       // CPU clocks at 1/3 the speed of the overall clock
-      if ((clock & 0b11) === 0b11) {
+      if ((clock & 0b11) === 0b11 && !this.tia.sendingRdySignalToCpu) {
         wasm.clock(this.cpu, this);
       }
 
@@ -35,9 +50,11 @@ class Atari2600 {
     this.lastFrameTimes[this.lastFrameTimePtr] = frameTime;
     this.lastFrameTimePtr = (this.lastFrameTimePtr + 1) & 0xF; // Only store last 255 frame times
     this.currentFps = 1000 / (this.lastFrameTimes.reduce((l, r) => l + r, 0) / this.lastFrameTimes.length);
-    console.log(`FPS: ${frameTime} ${this.currentFps}`);
+    console.log(`FrameTime/FPS: ${frameTime}/${this.currentFps}`);
 
-    this.runTimeoutId = setTimeout(this.runFrame, Math.max(0, 16 - frameTime));
+    if (!this.paused) {
+      this.runTimeoutId = setTimeout(this.runFrame, Math.max(1, 16 - frameTime));
+    }
   };
 
   run = (drawCallback) => {
@@ -46,45 +63,44 @@ class Atari2600 {
   };
 
   read_byte = (address) => {
-    const maskedAddress = address & 0x1FFF; // Only 13 address pins attached to mos_6507
+    const a12 = (address & 0b0001_0000_0000_0000) !== 0;
+    const a9 = (address & 0b0000_0010_0000_0000) !== 0;
+    const a7 = (address & 0b0000_0000_1000_0000) !== 0;
 
-    if (maskedAddress < 0x80) {
-      return this.tia.read_byte(address);
+    if (a12) {
+      return this.rom[address & 0xFFF];
     }
 
-    if (maskedAddress < 0x100) {
-      return this.ram[maskedAddress - 0x7F];
+    if (!a7) {
+      return this.tia.read_byte(address & 0xF);
     }
 
-    if (maskedAddress < 0x280) {
-      // console.log(`Reading unused address ${maskedAddress}`);
-    } else if (maskedAddress < 0x298) {
-      // console.log(`Reading PIA port address ${maskedAddress}`);
-    } else if (maskedAddress < 0x1000) {
-      // console.log(`Reading unused address ${maskedAddress}`);
-    } else { // All addresses up to 0x1FFF
-      return this.rom[maskedAddress - 0xFFF];
+    if (!a9) {
+      return this.riot.ram[address & 0x7F];
     }
 
-    return 0;
+    return this.riot.read_byte(address & 0x2ff);
   };
 
   write_byte = (address, value) => {
-    const maskedAddress = address & 0x1FFF; // Only 13 address pins attached to mos_6507
+    const a12 = (address & 0b0001_0000_0000_0000) !== 0;
+    const a9 = (address & 0b0000_0010_0000_0000) !== 0;
+    const a7 = (address & 0b0000_0000_1000_0000) !== 0;
 
-    if (maskedAddress < 0x80) {
-      this.tia.write_byte(address, value);
-    } else if (maskedAddress < 0x100) {
-      this.ram[maskedAddress - 0x7F] = value & 0xFF;
-    } else if (maskedAddress < 0x280) {
-      // console.log(`Writing ${value} to unused address ${maskedAddress}`);
-    } else if (maskedAddress < 0x298) {
-      // console.log(`Writing ${value} to PIA port address ${maskedAddress}`);
-    } else if (maskedAddress < 0x1000) {
-      // console.log(`Writing ${value} to unused address ${maskedAddress}`);
-    } else { // All addresses up to 0x1FFF
-      // console.log(`Writing ${value} to ROM address ${maskedAddress}`);
+    if (a12) {
+      // TODO - Handle bank switching on rom write
+      return;
     }
+
+    if (!a7) {
+      this.tia.write_byte(address & 0x3f, value);
+    }
+
+    if (!a9) {
+      this.riot.ram[address & 0x7F] = value & 0xFF;
+    }
+
+    this.riot.write_byte(address & 0x2FF, value);
   };
 
   // eslint-disable-next-line class-methods-use-this, no-unused-vars
