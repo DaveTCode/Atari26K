@@ -78,6 +78,7 @@ class TIA {
 
     // Wrap to the next scanline when we've clocked 228 times
     if (this.currentPixel === 228) {
+      this.sendingRdySignalToCpu = false;
       this.currentPixel = 0;
       this.currentScanline += 1;
 
@@ -304,7 +305,7 @@ class TIA {
         writeColor(this.playFieldAndBallColor, value);
         return;
       case 0x09: // COLUBK
-        writeColor(this.playFieldColor, value);
+        writeColor(this.backgroundColor, value);
         return;
       case 0x0A: // CTRLPF
         this.write_ctrlpf(value);

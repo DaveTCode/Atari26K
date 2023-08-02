@@ -2,23 +2,23 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 
 module.exports = {
-  entry: "./src/bootstrap.js",
+  entry: './src/bootstrap.js',
   experiments: {
-    asyncWebAssembly: true
+    asyncWebAssembly: true,
   },
   output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "bootstrap.js",
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bootstrap.js',
   },
-  mode: "development",
+  mode: 'development',
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, "public", "index.html"),
+      template: path.join(__dirname, 'public', 'index.html'),
     }),
   ],
   devServer: {
     static: {
-      directory: path.join(__dirname, "build"),
+      directory: path.join(__dirname, 'build'),
     },
     port: 3000,
   },
@@ -27,15 +27,23 @@ module.exports = {
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: ["babel-loader"],
+        use: ['babel-loader'],
       },
       {
         test: /\.css$/i,
-        use: ["css-loader"],
+        use: ['css-loader'],
+      },
+      {
+        test: /\.(png|jpe?g|gif)$/i,
+        use: [
+          {
+            loader: 'file-loader',
+          },
+        ],
       },
     ],
   },
   resolve: {
-    extensions: ["*", ".js", ".jsx"],
-  }
+    extensions: ['*', '.js', '.jsx'],
+  },
 };
